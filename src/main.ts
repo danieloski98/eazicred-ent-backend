@@ -24,8 +24,6 @@ async function bootstrap() {
   );
 
   // Set global prefix
-  const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
   app.use(morgan('combined'));
 
   // Swagger configuration

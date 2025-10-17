@@ -164,4 +164,19 @@ export class AuthService {
       session.endSession();
     }
   }
+
+  async resendOtp({ userId }: { userId: string }) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    await this.otpService.createOtp({ userId: user._id.toString() });
+
+    return new ReturnType({
+      message: 'OTP resent to email',
+      statusCode: 200,
+      data: null,
+    });
+  }
 }

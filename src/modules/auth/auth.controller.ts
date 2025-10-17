@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterCompanyAndUserDto } from './dto/register-company-user.dto';
 import { ValidateOtpDto } from './dto/validate-otp.dto';
+import { ResendOtpDto } from './dto/resend-otp.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UsersService } from '../../modules/users/users.service';
@@ -26,6 +27,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Validate OTP and issue JWT' })
   async validateOtp(@Body() dto: ValidateOtpDto) {
     return this.authService.validateOtp(dto);
+  }
+
+  @Post('resend-otp')
+  @ApiOperation({ summary: 'Resend OTP to user email' })
+  async resendOtp(@Body() dto: ResendOtpDto) {
+    return this.authService.resendOtp(dto);
   }
 
   @Post('register-company-user')
