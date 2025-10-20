@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -100,7 +101,7 @@ export class LoansService {
     const total = await this.loanModel.countDocuments(filter).exec();
 
     const pages = Math.max(1, Math.ceil(total / limitNum));
-    return { items, total, page: pageNum, limit: limitNum, pages };
+    return { data: items, total, page: pageNum, limit: limitNum, pages };
   }
 
   // Auth: Update loan status and notify applicant on APPROVED/REJECTED
@@ -178,6 +179,16 @@ export class LoansService {
       })
       .exec();
 
+    // Sum of amounts for approved loans
+    const approvedAmountAgg = await this.loanModel
+      .aggregate([
+        { $match: { companyId: companyObjectId, status: LoanStatus.APPROVED } },
+        { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+      ])
+      .exec();
+    const totalApprovedAmount = (approvedAmountAgg[0]?.totalAmount ??
+      0) as number;
+
     const percentageAccepted =
       totalLoans === 0
         ? 0
@@ -188,6 +199,26 @@ export class LoansService {
       totalAccepted,
       totalRejected,
       percentageAccepted,
+      totalApprovedAmount,
     };
+  }
+
+  async getAdminLoans(page: number) {
+    try {
+      const filter = { status: LoanStatus.APPROVED };
+      const loans = await this.loanModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * 10)
+        .limit(10)
+        .exec();
+
+      const total = await this.loanModel.countDocuments(filter).exec();
+      const pages = Math.max(1, Math.ceil(total / 10));
+
+      return { data: loans, total, page, limit: 10, pages };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to fetch admin loans');
+    }
   }
 }

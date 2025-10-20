@@ -8,7 +8,12 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { LoansService } from './loans.service';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -48,6 +53,16 @@ export class LoansController {
       Number(limit) || 10,
       status,
     );
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.HR, UserRole.LOAN_COMPANY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get paginated loans for a company' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  async getApprovedLoans(@Query('page') page?: number) {
+    return this.loansService.getAdminLoans(Number(page) || 1);
   }
 
   @Patch(':loanId/status')
