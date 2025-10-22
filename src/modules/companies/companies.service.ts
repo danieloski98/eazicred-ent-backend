@@ -26,13 +26,13 @@ export class CompaniesService {
 
   private async enrichedCompany(company: CompanyDocument) {
     try {
-      const creator = await this.userModel.find({ _id: company?._id });
+      const creator = await this.userModel.findById(company?.creatorId);
       const totalLoans = await this.loanModel.countDocuments({
-        companyId: company._id,
+        companyId: company._id.toString(),
       });
 
       return {
-        ...company.toJSON(),
+        ...company.toObject(),
         creator,
         totalLoans,
       };
@@ -41,17 +41,14 @@ export class CompaniesService {
 
   async getCompanyBySlug(slug: string) {
     try {
-      const company = await this.companyModel
-        .find({ slug })
-        .populate('hrUserId', '-password')
-        .exec();
+      const company = await this.companyModel.findOne({ slug }).exec();
 
       if (!company) {
         throw new NotFoundException('Company not found');
       }
-
+      this.logger.error(company);
       const enrichedCompany = await this.enrichedCompany(company as any);
-
+      this.logger.debug('enriched company', enrichedCompany);
       return new ReturnType({
         statusCode: 200,
         data: enrichedCompany,
@@ -67,11 +64,7 @@ export class CompaniesService {
   }
 
   async findById(id: string) {
-    const company = await this.companyModel
-      .findById(id)
-      .populate('hrUserId', '-password')
-      .populate('employees')
-      .exec();
+    const company = await this.companyModel.findById(id).exec();
     if (!company) {
       throw new NotFoundException('Company not found');
     }
@@ -130,5 +123,44 @@ export class CompaniesService {
       throw new NotFoundException('Company not found');
     }
     return deleted;
+  }
+
+  // New: Paginated list of all companies
+  async findAll({ page = 1, limit = 10 }: { page?: number; limit?: number }) {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.companyModel
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.companyModel.countDocuments().exec(),
+    ]);
+
+    const enriched = await Promise.all(
+      items.map((c) => this.enrichedCompany(c as any)),
+    );
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return new ReturnType({
+      statusCode: 200,
+      message: 'Companies fetched successfully',
+      data: {
+        items: enriched,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPage,
+          hasPrevPage,
+        },
+      },
+    });
   }
 }

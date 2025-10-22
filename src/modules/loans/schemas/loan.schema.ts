@@ -47,6 +47,15 @@ export class Loan {
   additionalInformation: string;
 
   @Prop({ required: true, type: String })
+  bankName: string;
+
+  @Prop({ required: true, type: String })
+  accountNumber: string;
+
+  @Prop({ required: true, type: String })
+  accountName: string;
+
+  @Prop({ required: true, type: String })
   email: string;
 
   @Prop({ required: true, type: String })

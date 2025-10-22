@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -15,6 +16,7 @@ import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class LoansService {
+  private logger = new Logger(LoansService.name);
   constructor(
     @InjectModel(Loan.name) private loanModel: Model<LoanDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
@@ -166,6 +168,12 @@ export class LoansService {
     const totalLoans = await this.loanModel
       .countDocuments({ companyId: companyObjectId })
       .exec();
+    const totalPending = await this.loanModel
+      .countDocuments({
+        companyId,
+        status: LoanStatus.PENDING,
+      })
+      .exec();
     const totalAccepted = await this.loanModel
       .countDocuments({
         companyId: companyObjectId,
@@ -200,6 +208,7 @@ export class LoansService {
       totalRejected,
       percentageAccepted,
       totalApprovedAmount,
+      totalPending,
     };
   }
 
@@ -212,6 +221,8 @@ export class LoansService {
         .skip((page - 1) * 10)
         .limit(10)
         .exec();
+
+      this.logger.log(`Fetched ${loans.length} admin loans`);
 
       const total = await this.loanModel.countDocuments(filter).exec();
       const pages = Math.max(1, Math.ceil(total / 10));

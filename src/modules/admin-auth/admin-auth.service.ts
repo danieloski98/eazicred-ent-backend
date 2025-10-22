@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, UnauthorizedException, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Admin, AdminDocument } from './schemas/admin.schema';
@@ -111,12 +117,12 @@ export class AdminAuthService {
 
       const record = await this.otpModel
         .findOne({ code: otp, userId: adminId })
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .exec();
 
-      if (!record || record.expired) {
+      if (!record) {
         throw new BadRequestException('Invalid OTP code');
       }
-
       // mark as used
       record.expired = true;
       await record.save();

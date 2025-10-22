@@ -56,9 +56,6 @@ export class LoansController {
   }
 
   @Get('admin')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.HR, UserRole.LOAN_COMPANY)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get paginated loans for a company' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   async getApprovedLoans(@Query('page') page?: number) {

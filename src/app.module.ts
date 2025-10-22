@@ -11,6 +11,7 @@ import { LoansModule } from './modules/loans/loans.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { RateModule } from './modules/rate/rate.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     UploadsModule,
     AdminAuthModule,
     AnalyticsModule,
+    RateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

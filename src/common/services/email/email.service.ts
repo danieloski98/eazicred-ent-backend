@@ -8,7 +8,7 @@ import WaitlistEmail from '@/common/templates/waitlist';
 export class EmailService implements OnModuleInit {
   private resend: Resend;
   private logger = new Logger(EmailService.name);
-
+  private from = `Eazicred Support contact@eazicred.com`;
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
@@ -26,7 +26,7 @@ export class EmailService implements OnModuleInit {
     name: string;
   }) {
     const { error, data } = await this.resend.emails.send({
-      from: 'Eazicred Support <support@2ddevstudios.com>',
+      from: this.from,
       to: [email],
       subject: 'Verify Your email',
       react: EmailConfirmation({ code, firstName: name }),
@@ -47,7 +47,7 @@ export class EmailService implements OnModuleInit {
     body: string;
   }) {
     const { error, data } = await this.resend.emails.send({
-      from: 'Eazicred Support <support@2ddevstudios.com>',
+      from: this.from,
       to: emails,
       subject,
       html: body,

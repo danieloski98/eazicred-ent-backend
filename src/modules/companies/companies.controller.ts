@@ -7,22 +7,28 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
-import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles, UserRole } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @ApiTags('Companies')
 @Controller('companies')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get paginated companies' })
+  findAll(@Query() query: PaginationDto) {
+    const { page = 1, limit = 10 } = query;
+    return this.companiesService.findAll({ page, limit });
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get company by ID' })
@@ -34,6 +40,13 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get company by slug' })
   findBySlug(@Param('slug') slug: string) {
     return this.companiesService.getCompanyBySlug(slug);
+  }
+
+  @Get('hr/:hrUserId')
+  @Roles(UserRole.HR)
+  @ApiOperation({ summary: 'Get company by HR user ID (HR only)' })
+  findByHrUserId(@Param('hrUserId') hrUserId: string) {
+    return this.companiesService.findByHrUserId(hrUserId);
   }
 
   @Patch(':id')

@@ -76,4 +76,28 @@ export class CreateLoanDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
+
+  @ApiProperty({
+    example: 'Access Bank',
+    description: 'Bank name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  bankName: string;
+
+  @ApiProperty({
+    example: '0123456789',
+    description: 'Bank account number',
+  })
+  @IsString()
+  @IsNotEmpty()
+  accountNumber: string;
+
+  @ApiProperty({
+    example: 'John Doe',
+    description: 'Bank account name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  accountName: string;
 }
