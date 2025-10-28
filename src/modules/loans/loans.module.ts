@@ -6,6 +6,7 @@ import { Loan, LoanSchema } from './schemas/loan.schema';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { EmailService } from '@/common/services/email/email.service';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { Admin, AdminSchema } from '../admin-auth/schemas/admin.schema';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
       { name: Loan.name, schema: LoanSchema },
       { name: Company.name, schema: CompanySchema },
       { name: User.name, schema: UserSchema },
+      { name: Admin.name, schema: AdminSchema },
     ]),
   ],
   controllers: [LoansController],

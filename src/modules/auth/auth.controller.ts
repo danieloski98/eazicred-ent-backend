@@ -23,6 +23,12 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Post('request-otp')
+  @ApiOperation({ summary: 'Validate email and send OTP' })
+  async requestOtp(@Body() dto: LoginDto) {
+    return this.authService.requestOtp(dto);
+  }
+
   @Post('validate-otp')
   @ApiOperation({ summary: 'Validate OTP and issue JWT' })
   async validateOtp(@Body() dto: ValidateOtpDto) {

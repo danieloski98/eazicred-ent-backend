@@ -28,13 +28,14 @@ export class CompaniesService {
     try {
       const creator = await this.userModel.findById(company?.creatorId);
       const totalLoans = await this.loanModel.countDocuments({
-        companyId: company._id.toString(),
+        companyId: company._id,
       });
 
       return {
         ...company.toObject(),
         creator,
         totalLoans,
+        tenure: company.tenure || 1,
       };
     } catch (error) {}
   }

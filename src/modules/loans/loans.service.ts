@@ -13,6 +13,7 @@ import { CreateLoanDto } from './dto/create-loan.dto';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { EmailService } from '@/common/services/email/email.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { Admin, AdminDocument } from '../admin-auth/schemas/admin.schema';
 
 @Injectable()
 export class LoansService {
@@ -21,6 +22,7 @@ export class LoansService {
     @InjectModel(Loan.name) private loanModel: Model<LoanDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     private emailService: EmailService,
   ) {}
 
@@ -101,9 +103,18 @@ export class LoansService {
       .exec();
 
     const total = await this.loanModel.countDocuments(filter).exec();
+    const enrichedLoans = await Promise.all(
+      items.map((item) => this.enrichLoans(item)),
+    );
 
     const pages = Math.max(1, Math.ceil(total / limitNum));
-    return { data: items, total, page: pageNum, limit: limitNum, pages };
+    return {
+      data: enrichedLoans,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages,
+    };
   }
 
   // Auth: Update loan status and notify applicant on APPROVED/REJECTED
@@ -133,11 +144,38 @@ export class LoansService {
     // Notify applicant if status is approved or rejected
     try {
       if (status === LoanStatus.APPROVED) {
+        // Notify applicant
         await this.emailService.sendCoachMail({
           emails: [updated.email],
           subject: 'Loan Application Approved',
           body: `Hi ${updated.firstName}, your loan application has been approved. We will contact you shortly with next steps.`,
         });
+
+        // Notify all admins
+        try {
+          const admins = await this.adminModel.find({}, 'email name').exec();
+          const adminEmails = admins
+            .map((a) => a.toJSON().email)
+            .filter(Boolean);
+          if (adminEmails.length > 0) {
+            await this.emailService.sendCoachMail({
+              emails: adminEmails as any,
+              subject: 'Loan Approved Notification',
+              body: `A loan has been approved.
+
+Applicant: ${updated.firstName} ${updated.lastName}
+Amount: ${updated.amount}
+Purpose: ${updated.purpose}
+Company ID: ${updated.companyId?.toString?.() ?? ''}
+Loan ID: ${updated._id?.toString?.() ?? ''}
+
+Please review this approved loan in the admin dashboard.`,
+            });
+          }
+        } catch (e) {
+          // Swallow admin email errors
+          this.logger.warn('Failed to notify admins about approved loan');
+        }
       } else if (status === LoanStatus.REJECTED) {
         await this.emailService.sendCoachMail({
           emails: [updated.email],
@@ -214,7 +252,9 @@ export class LoansService {
 
   async getAdminLoans(page: number) {
     try {
-      const filter = { status: LoanStatus.APPROVED };
+      const filter = {
+        status: { $in: [LoanStatus.APPROVED, LoanStatus.FUNDED] },
+      };
       const loans = await this.loanModel
         .find(filter)
         .sort({ createdAt: -1 })
@@ -227,9 +267,26 @@ export class LoansService {
       const total = await this.loanModel.countDocuments(filter).exec();
       const pages = Math.max(1, Math.ceil(total / 10));
 
-      return { data: loans, total, page, limit: 10, pages };
+      const enrichedData = await Promise.all(
+        loans.map((item) => this.enrichLoans(item)),
+      );
+
+      return { data: enrichedData, total, page, limit: 10, pages };
     } catch (error) {
       throw new InternalServerErrorException('Failed to fetch admin loans');
     }
+  }
+
+  private async enrichLoans(loan: LoanDocument) {
+    const company = await this.companyModel.findById(loan.companyId).exec();
+    if (company) {
+      return {
+        ...loan.toJSON(),
+        company: {
+          ...company.toJSON(),
+        },
+      };
+    }
+    return loan;
   }
 }

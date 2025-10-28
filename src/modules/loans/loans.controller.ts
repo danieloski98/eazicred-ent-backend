@@ -63,8 +63,6 @@ export class LoansController {
   }
 
   @Patch(':loanId/status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.HR, UserRole.LOAN_COMPANY)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update loan status and notify applicant' })
   async updateStatus(

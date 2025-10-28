@@ -8,6 +8,8 @@ import {
   MinLength,
   IsUrl,
   ValidateNested,
+  Max,
+  Min,
 } from 'class-validator';
 import { UserRole } from '../../../common/decorators/roles.decorator';
 
@@ -48,7 +50,15 @@ export class CreateCompanyPayloadDto {
     description: 'Public URL to the company logo',
   })
   @IsUrl()
+  @IsOptional()
   logo: string;
+
+  @ApiProperty({ example: 1, description: 'Tenure of the company in years' })
+  @IsOptional()
+  @Type(() => Number)
+  @Max(3)
+  @Min(1)
+  tenure: number;
 }
 
 export class RegisterCompanyAndUserDto {

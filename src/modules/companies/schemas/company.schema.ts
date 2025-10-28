@@ -14,13 +14,16 @@ export class Company {
   @Prop({ required: true, ref: 'User', type: Types.ObjectId })
   creatorId: string;
 
+  @Prop({ required: false, type: Number, default: 1 })
+  tenure: number;
+
   @Prop({
     required: false,
     set: (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, ''),
   })
   slug: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false, type: String })
   logo: string;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Employee' }], default: [] })

@@ -9,21 +9,25 @@ import { ReturnType } from '@/common/classes/ReturnType';
 export class AnalyticsService {
   private logger = new Logger(AnalyticsService.name);
   constructor(
-    @InjectModel(Company.name) private readonly companyModel: Model<CompanyDocument>,
+    @InjectModel(Company.name)
+    private readonly companyModel: Model<CompanyDocument>,
     @InjectModel(Loan.name) private readonly loanModel: Model<LoanDocument>,
   ) {}
 
   async getSummary() {
-    const [totalCompanies, totalApprovedLoans, amountAgg] = await Promise.all([
-      this.companyModel.countDocuments().exec(),
-      this.loanModel.countDocuments({ status: LoanStatus.APPROVED }).exec(),
-      this.loanModel
-        .aggregate([
-          { $match: { status: LoanStatus.APPROVED } },
-          { $group: { _id: null, total: { $sum: '$amount' } } },
-        ])
-        .exec(),
-    ]);
+    const [totalCompanies, totalApprovedLoans, amountAgg, totalFundedloans] =
+      await Promise.all([
+        this.companyModel.countDocuments().exec(),
+        this.loanModel.countDocuments({ status: LoanStatus.APPROVED }).exec(),
+
+        this.loanModel
+          .aggregate([
+            { $match: { status: LoanStatus.FUNDED } },
+            { $group: { _id: null, total: { $sum: '$amount' } } },
+          ])
+          .exec(),
+        this.loanModel.countDocuments({ status: LoanStatus.FUNDED }).exec(),
+      ]);
 
     const totalAmountOfApprovedLoans = amountAgg?.[0]?.total || 0;
 
@@ -34,6 +38,7 @@ export class AnalyticsService {
         totalCompanies,
         totalApprovedLoans,
         totalAmountOfApprovedLoans,
+        totalFundedloans,
       },
     });
   }

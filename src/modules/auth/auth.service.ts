@@ -50,6 +50,31 @@ export class AuthService {
     });
   }
 
+  /**
+   * Validates a user's email and sends an OTP to it.
+   * Mirrors the logic of `login` but provided as a dedicated method
+   * for flows that only need email-based OTP initiation.
+   */
+  async requestOtp(loginDto: LoginDto) {
+    const user = await this.usersService.findByEmail(loginDto.email);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    await this.otpService.createOtp({ userId: user._id.toString() });
+
+    return new ReturnType({
+      message: 'OTP sent to email',
+      statusCode: 200,
+      data: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        companyId: user.companyId,
+      },
+    });
+  }
+
   async validateOtp({ userId, otp }: { userId: string; otp: string }) {
     try {
       const user = await this.userModel.findById(userId);

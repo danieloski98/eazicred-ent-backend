@@ -24,6 +24,12 @@ export class AdminAuthController {
     return this.adminAuthService.login(dto);
   }
 
+  @Post('request-otp')
+  @ApiOperation({ summary: 'Send OTP to admin email' })
+  requestOtp(@Body() dto: LoginAdminDto) {
+    return this.adminAuthService.requestOtp(dto);
+  }
+
   @Post('validate-otp')
   @ApiOperation({ summary: 'Validate admin OTP' })
   validateOtp(@Body() dto: AdminValidateOtpDto) {

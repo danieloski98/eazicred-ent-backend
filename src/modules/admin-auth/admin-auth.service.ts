@@ -108,6 +108,41 @@ export class AdminAuthService {
     });
   }
 
+  /**
+   * Validate admin email and send an OTP to it.
+   * This is a dedicated flow for sending OTP without implying login semantics.
+   */
+  async requestOtp(dto: LoginAdminDto) {
+    const email = dto.email.toLowerCase().trim();
+    const admin = await this.adminModel.findOne({ email }).exec();
+    if (!admin) {
+      throw new UnauthorizedException('Invalid admin credentials');
+    }
+
+    const code = this.generateOtpCode();
+    const record = await this.otpModel.create({
+      code,
+      userId: admin._id.toString(),
+    });
+    await record.save();
+
+    await this.emailService.sendConfirmationMail({
+      email: admin.email,
+      code,
+      name: admin.name ?? admin.email,
+    });
+
+    return new ReturnType({
+      message: 'OTP sent to email',
+      statusCode: 200,
+      data: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+      },
+    });
+  }
+
   async validateOtp({ adminId, otp }: { adminId: string; otp: string }) {
     try {
       const admin = await this.adminModel.findById(adminId);
