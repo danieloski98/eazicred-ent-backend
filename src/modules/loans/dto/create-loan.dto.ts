@@ -6,6 +6,7 @@ import {
   Min,
   IsMongoId,
   IsEmail,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateLoanDto {
@@ -43,6 +44,11 @@ export class CreateLoanDto {
   @IsString()
   @IsNotEmpty()
   bvn: string;
+
+  @ApiProperty({ example: '12345678901', description: 'Borrower BVN' })
+  @IsString()
+  @IsOptional()
+  nin: string;
 
   @ApiProperty({ example: 'John', description: 'Borrower first name' })
   @IsString()

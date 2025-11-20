@@ -37,6 +37,9 @@ export class Loan {
   @Prop({ required: true, type: String })
   bvn: string;
 
+  @Prop({ required: false, type: String })
+  nin: string;
+
   @Prop({ required: true, type: String })
   firstName: string;
 
