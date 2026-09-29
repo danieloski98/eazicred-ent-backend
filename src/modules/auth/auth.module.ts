@@ -20,7 +20,7 @@ import { EmailService } from '@/common/services/email/email.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret') || 'your-secret-key',
+        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
         signOptions: { expiresIn: '24h' },
       }),
       inject: [ConfigService],
@@ -35,4 +35,4 @@ import { EmailService } from '@/common/services/email/email.service';
   providers: [AuthService, JwtStrategy, OtpService, EmailService],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }
