@@ -8,8 +8,8 @@ import WaitlistEmail from '@/common/templates/waitlist';
 export class EmailService implements OnModuleInit {
   private resend: Resend;
   private logger = new Logger(EmailService.name);
-  private from = `Eazicred Support <contact@eazicred.com>`;
-  constructor(private configService: ConfigService) {}
+  private from = `Eazicred Support <contact@inuviastudios.com>`;
+  constructor(private configService: ConfigService) { }
 
   onModuleInit() {
     this.resend = new Resend(this.configService.get('RESEND_KEY'));
