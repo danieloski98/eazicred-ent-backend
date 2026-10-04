@@ -12,6 +12,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RateModule } from './modules/rate/rate.module';
+import { PackagesModule } from './modules/packages/packages.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RateModule } from './modules/rate/rate.module';
     AdminAuthModule,
     AnalyticsModule,
     RateModule,
+    PackagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
