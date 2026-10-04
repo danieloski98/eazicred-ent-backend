@@ -14,6 +14,7 @@ import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { EmailService } from '@/common/services/email/email.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Admin, AdminDocument } from '../admin-auth/schemas/admin.schema';
+import { Package, PackageDocument } from '../packages/schema/schema';
 
 @Injectable()
 export class LoansService {
@@ -23,8 +24,9 @@ export class LoansService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
+    @InjectModel(Package.name) private packageModel: Model<PackageDocument>,
     private emailService: EmailService,
-  ) {}
+  ) { }
 
   // Public: Create a loan application after validating companyId
   async createPublicLoan(dto: CreateLoanDto) {
@@ -39,9 +41,27 @@ export class LoansService {
       throw new NotFoundException('Company not found');
     }
 
+    if (dto?.packageId) {
+      if (!Types.ObjectId.isValid(dto.packageId)) {
+        throw new BadRequestException('Invalid package ID');
+      }
+
+      const packageDoc = await this.packageModel.findById(dto.packageId).exec();
+      if (!packageDoc) {
+        throw new NotFoundException('Package not found');
+      }
+
+      if (packageDoc.companyId.toString() !== companyId.toString()) {
+        throw new BadRequestException(
+          'Package does not belong to the specified company',
+        );
+      }
+    }
+
     const payload = {
       ...dto,
       companyId: new Types.ObjectId(companyId),
+      ...(dto?.packageId && { packageId: new Types.ObjectId(dto.packageId) }),
       status: LoanStatus.PENDING,
       hrApproved: false,
     } as any;

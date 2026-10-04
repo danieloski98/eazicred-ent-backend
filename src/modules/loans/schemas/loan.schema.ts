@@ -16,6 +16,9 @@ export class Loan {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Package', required: false })
+  packageId: Types.ObjectId;
+
   @Prop({ required: true })
   amount: number;
 

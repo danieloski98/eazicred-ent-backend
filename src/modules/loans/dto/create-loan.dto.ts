@@ -17,6 +17,14 @@ export class CreateLoanDto {
   @IsMongoId()
   companyId: string;
 
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'ID of the package',
+  })
+  @IsMongoId()
+  @IsOptional()
+  packageId?: string;
+
   @ApiProperty({ example: 5000, description: 'Loan amount' })
   @IsNumber()
   @Min(1)
