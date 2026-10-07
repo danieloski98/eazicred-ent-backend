@@ -8,7 +8,7 @@ import WaitlistEmail from '@/common/templates/waitlist';
 export class EmailService implements OnModuleInit {
   private resend: Resend;
   private logger = new Logger(EmailService.name);
-  private from = `Eazicred Support <contact@2ddevstudios.com>`;
+  private from = `Eazicred Support <support@eazicred.com>`;
   constructor(private configService: ConfigService) { }
 
   onModuleInit() {

@@ -164,6 +164,7 @@ export class LoansService {
     // Notify applicant if status is approved or rejected
     try {
       if (status === LoanStatus.APPROVED) {
+
         // Notify applicant
         await this.emailService.sendCoachMail({
           emails: [updated.email],
@@ -174,22 +175,24 @@ export class LoansService {
         // Notify all admins
         try {
           const admins = await this.adminModel.find({}, 'email name').exec();
-          const adminEmails = admins
+          let adminEmails = ['underwriter@eazicred.com']
+
+          const emails = admins
             .map((a) => a.toJSON().email)
             .filter(Boolean);
+          adminEmails = [...adminEmails, ...emails];
+
           if (adminEmails.length > 0) {
             await this.emailService.sendCoachMail({
               emails: adminEmails as any,
               subject: 'Loan Approved Notification',
               body: `A loan has been approved.
-
-Applicant: ${updated.firstName} ${updated.lastName}
-Amount: ${updated.amount}
-Purpose: ${updated.purpose}
-Company ID: ${updated.companyId?.toString?.() ?? ''}
-Loan ID: ${updated._id?.toString?.() ?? ''}
-
-Please review this approved loan in the admin dashboard.`,
+                Applicant: ${updated.firstName} ${updated.lastName}
+                Amount: ${updated.amount}
+                Purpose: ${updated.purpose}
+                Company ID: ${updated.companyId?.toString?.() ?? ''}
+                Loan ID: ${updated._id?.toString?.() ?? ''}
+                Please review this approved loan in the admin dashboard.`,
             });
           }
         } catch (e) {
