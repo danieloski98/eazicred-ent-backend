@@ -7,6 +7,7 @@ import {
   IsMongoId,
   IsEmail,
   IsOptional,
+  IsArray,
 } from 'class-validator';
 
 export class CreateLoanDto {
@@ -114,4 +115,32 @@ export class CreateLoanDto {
   @IsString()
   @IsNotEmpty()
   accountName: string;
+
+  @ApiProperty({
+    example: [
+      'https://res.cloudinary.com/demo/image/upload/v1/uploader/utility_bill.pdf',
+    ],
+    description: 'List of utility bill document URLs',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  utilityBills?: string[];
+
+  @ApiProperty({
+    example: [
+      'https://res.cloudinary.com/demo/image/upload/v1/uploader/bank_statement.pdf',
+    ],
+    description: 'List of bank record/statement document URLs',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  bankRecords?: string[];
 }

@@ -69,6 +69,12 @@ export class Loan {
 
   @Prop({ required: true, type: Number, default: 0 })
   totalAmountPaid: number;
+
+  @Prop({ type: [String], default: [] })
+  utilityBills: string[];
+
+  @Prop({ type: [String], default: [] })
+  bankRecords: string[];
 }
 
 export const LoanSchema = SchemaFactory.createForClass(Loan);
