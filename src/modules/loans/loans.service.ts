@@ -11,10 +11,11 @@ import { Model, Types } from 'mongoose';
 import { Loan, LoanDocument, LoanStatus } from './schemas/loan.schema';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
-import { EmailService } from '@/common/services/email/email.service';
+import { EmailService } from '../../common/services/email/email.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Admin, AdminDocument } from '../admin-auth/schemas/admin.schema';
 import { Package, PackageDocument } from '../packages/schema/schema';
+import { buildLoanApprovedAdminEmail } from './templates/loan-approved-admin.template';
 
 @Injectable()
 export class LoansService {
@@ -153,8 +154,13 @@ export class LoansService {
       throw new BadRequestException('Invalid status value');
     }
 
+    const updatePayload: any = { status };
+    if (status === LoanStatus.APPROVED) {
+      updatePayload.hrApproved = true;
+    }
+
     const updated = await this.loanModel
-      .findByIdAndUpdate(loanId, { $set: { status } }, { new: true })
+      .findByIdAndUpdate(loanId, { $set: updatePayload }, { new: true })
       .exec();
 
     if (!updated) {
@@ -164,40 +170,62 @@ export class LoansService {
     // Notify applicant if status is approved or rejected
     try {
       if (status === LoanStatus.APPROVED) {
-
         // Notify applicant
-        await this.emailService.sendCoachMail({
-          emails: [updated.email],
-          subject: 'Loan Application Approved',
-          body: `Hi ${updated.firstName}, your loan application has been approved. We will contact you shortly with next steps.`,
-        });
+        try {
+          await this.emailService.sendCoachMail({
+            emails: [updated.email],
+            subject: 'Loan Application Approved',
+            body: `Hi ${updated.firstName}, your loan application has been approved. We will contact you shortly with next steps.`,
+          });
+        } catch (applicantErr) {
+          this.logger.warn(
+            `Failed to notify applicant about loan approval: ${applicantErr?.message ?? applicantErr}`,
+          );
+        }
 
-        // Notify all admins
+        // Notify all admins in the platform with full loan details
         try {
           const admins = await this.adminModel.find({}, 'email name').exec();
-          let adminEmails = ['underwriter@eazicred.com']
-
-          const emails = admins
-            .map((a) => a.toJSON().email)
-            .filter(Boolean);
-          adminEmails = [...adminEmails, ...emails];
+          const adminEmails = Array.from(
+            new Set(
+              ['underwriter@eazicred.com', ...admins.map((a) => a.toJSON?.()?.email ?? a.email)]
+                .filter((email): email is string => Boolean(email && typeof email === 'string' && email.trim()))
+                .map((email) => email.trim().toLowerCase()),
+            ),
+          );
 
           if (adminEmails.length > 0) {
-            await this.emailService.sendCoachMail({
-              emails: adminEmails as any,
-              subject: 'Loan Approved Notification',
-              body: `A loan has been approved.
-                Applicant: ${updated.firstName} ${updated.lastName}
-                Amount: ${updated.amount}
-                Purpose: ${updated.purpose}
-                Company ID: ${updated.companyId?.toString?.() ?? ''}
-                Loan ID: ${updated._id?.toString?.() ?? ''}
-                Please review this approved loan in the admin dashboard.`,
+            const company = await this.companyModel.findById(updated.companyId).exec();
+            let packageName: string | undefined;
+            if (updated.packageId) {
+              const packageDoc = await this.packageModel.findById(updated.packageId).exec();
+              if (packageDoc) {
+                packageName = packageDoc.name;
+              }
+            }
+
+            const { subject, html, text } = buildLoanApprovedAdminEmail({
+              loan: updated,
+              company,
+              packageName,
             });
+
+            await this.emailService.sendCoachMail({
+              emails: adminEmails,
+              subject,
+              body: text,
+              html,
+            });
+
+            this.logger.log(
+              `Sent approved loan notification for loan ${updated._id} to ${adminEmails.length} admin email(s)`,
+            );
           }
-        } catch (e) {
+        } catch (adminErr) {
           // Swallow admin email errors
-          this.logger.warn('Failed to notify admins about approved loan');
+          this.logger.warn(
+            `Failed to notify admins about approved loan: ${adminErr?.message ?? adminErr}`,
+          );
         }
       } else if (status === LoanStatus.REJECTED) {
         await this.emailService.sendCoachMail({

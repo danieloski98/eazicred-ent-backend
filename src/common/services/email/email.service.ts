@@ -41,16 +41,25 @@ export class EmailService implements OnModuleInit {
     emails,
     subject,
     body,
+    html,
   }: {
     emails: string[];
     subject: string;
     body: string;
+    html?: string;
   }) {
+    const formattedHtml =
+      html ??
+      (body.trim().startsWith('<')
+        ? body
+        : `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; white-space: pre-line; line-height: 1.6; color: #1e293b;">${body}</div>`);
+
     const { error, data } = await this.resend.emails.send({
       from: this.from,
       to: emails,
       subject,
-      html: body,
+      html: formattedHtml,
+      text: body,
     });
     if (error) {
       this.logger.error(error);
